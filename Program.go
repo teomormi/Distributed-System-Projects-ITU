@@ -2,62 +2,67 @@ package main
 
 import (
 	"fmt"
+	"sync"
 )
 
-
+var arbiter sync.Mutex
 
 func main() {
-	counter1 := 0
-	counter2 := 0
-	counter3 := 0
-	counter4 := 0
-	counter5 := 0
-
-	ch1 := make(chan bool)
-	ch2 := make(chan bool)
-	ch3 := make(chan bool)
-	ch4 := make(chan bool)
-	ch5 := make(chan bool)
-	ch6 := make(chan bool)
-	ch7 := make(chan bool)
-	ch8 := make(chan bool)
-	ch9 := make(chan bool)
-	ch10 := make(chan bool)
-
-	go fork(ch1, ch3)
-	go fork(ch3, ch5)
-	go fork(ch5, ch7)
-	go fork(ch7, ch9)
-	go fork(ch9, ch1)
-
-	go philosopher(ch10, ch2)
-	go philosopher(ch2, ch4)
-	go philosopher(ch4, ch6)
-	go philosopher(ch6, ch8)
-	go philosopher(ch8, ch10)
+	var phylo int = 5 // number of phylo to create
+	var prev chan int
+	first := make(chan int)
+	for i := 0; i < phylo; i++ {
+		next := make(chan int)
+		if i < (phylo - 1) { // not the last
+			if i == 0 { // the first
+				go phylos(first, next)
+			} else {
+				go phylos(prev, next)
+			}
+			prev = make(chan int)
+			go fork(next, prev)
+		} else {
+			go phylos(prev, next)
+			go fork(next, first)
+		}
+	}
+	for {
+		// just to wait for the print
+	}
 }
 
-func fork(ch1, ch2 chan bool){
+func fork(left chan int, right chan int) {
 	isTaken := false
 	fmt.Println("hey")
 
+	arbiter.Lock()
+	fmt.Print(left)
+	fmt.Print(" fork here ")
+	fmt.Println(right)
+	arbiter.Unlock()
 }
 
-func philosopher(ch1, ch2 chan bool) {
+func phylos(left chan int, right chan int) {
+	arbiter.Lock()
+	fmt.Print(left)
+	fmt.Print(" phylo here ")
+	fmt.Println(right)
+	arbiter.Unlock()
+
 	state := "thinking"
 
 	for {
 		switch state {
 		case "thinking":
-		
-			if (<-ch1 && <-ch2) {
+
+			if <-ch1 && <-ch2 {
 				ch1 <- true
 				ch2 <- true
 				state = "eating"
 			}
 			break
 		case "eating":
-		
+
 			state = "thinking"
 			break
 		}

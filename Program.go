@@ -36,5 +36,17 @@ func fork(ch1, ch2 chan string){
 }
 
 func philosopher(ch1, ch2 chan string) {
+	state := "thinking"
+
+	switch state {
+	case "thinking":
 	
+	state = "eating"
+	break
+
+	case "eating":
+	
+	state = "thinking"
+	break
+	}
 }

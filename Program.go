@@ -4,17 +4,25 @@ import (
 	"fmt"
 )
 
+
+
 func main() {
-	ch1 := make(chan string)
-	ch2 := make(chan string)
-	ch3 := make(chan string)
-	ch4 := make(chan string)
-	ch5 := make(chan string)
-	ch6 := make(chan string)
-	ch7 := make(chan string)
-	ch8 := make(chan string)
-	ch9 := make(chan string)
-	ch10 := make(chan string)
+	counter1 := 0
+	counter2 := 0
+	counter3 := 0
+	counter4 := 0
+	counter5 := 0
+
+	ch1 := make(chan bool)
+	ch2 := make(chan bool)
+	ch3 := make(chan bool)
+	ch4 := make(chan bool)
+	ch5 := make(chan bool)
+	ch6 := make(chan bool)
+	ch7 := make(chan bool)
+	ch8 := make(chan bool)
+	ch9 := make(chan bool)
+	ch10 := make(chan bool)
 
 	go fork(ch1, ch3)
 	go fork(ch3, ch5)
@@ -29,24 +37,29 @@ func main() {
 	go philosopher(ch8, ch10)
 }
 
-func fork(ch1, ch2 chan string){
+func fork(ch1, ch2 chan bool){
 	isTaken := false
 	fmt.Println("hey")
 
 }
 
-func philosopher(ch1, ch2 chan string) {
+func philosopher(ch1, ch2 chan bool) {
 	state := "thinking"
 
-	switch state {
-	case "thinking":
-	
-	state = "eating"
-	break
-
-	case "eating":
-	
-	state = "thinking"
-	break
+	for {
+		switch state {
+		case "thinking":
+		
+			if (<-ch1 && <-ch2) {
+				ch1 <- true
+				ch2 <- true
+				state = "eating"
+			}
+			break
+		case "eating":
+		
+			state = "thinking"
+			break
+		}
 	}
 }

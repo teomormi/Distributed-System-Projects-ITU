@@ -9,17 +9,17 @@ var arbiter sync.Mutex
 
 func main() {
 	var phylo int = 5 // number of phylo to create
-	var prev chan int
-	first := make(chan int)
+	var prev chan bool
+	first := make(chan bool)
 	for i := 0; i < phylo; i++ {
-		next := make(chan int)
+		next := make(chan bool)
 		if i < (phylo - 1) { // not the last
 			if i == 0 { // the first
 				go phylos(first, next)
 			} else {
 				go phylos(prev, next)
 			}
-			prev = make(chan int)
+			prev = make(chan bool)
 			go fork(next, prev)
 		} else {
 			go phylos(prev, next)
@@ -31,7 +31,7 @@ func main() {
 	}
 }
 
-func fork(left chan int, right chan int) {
+func fork(left chan bool, right chan bool) {
 	isTaken := false
 	fmt.Println("hey")
 
@@ -42,7 +42,7 @@ func fork(left chan int, right chan int) {
 	arbiter.Unlock()
 }
 
-func phylos(left chan int, right chan int) {
+func phylos(left chan bool, right chan bool) {
 	arbiter.Lock()
 	fmt.Print(left)
 	fmt.Print(" phylo here ")
@@ -55,9 +55,9 @@ func phylos(left chan int, right chan int) {
 		switch state {
 		case "thinking":
 
-			if <-ch1 && <-ch2 {
-				ch1 <- true
-				ch2 <- true
+			if <-left && <-right {
+				left <- true
+				right <- true
 				state = "eating"
 			}
 			break

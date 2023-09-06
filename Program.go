@@ -1,12 +1,5 @@
 package main
 
-import (
-	"fmt"
-	"sync"
-)
-
-var arbiter sync.Mutex
-
 func main() {
 	var phylo int = 5 // number of phylo to create
 	var prev chan bool
@@ -33,22 +26,37 @@ func main() {
 
 func fork(left chan bool, right chan bool) {
 	isTaken := false
-	fmt.Println("hey")
 
-	arbiter.Lock()
-	fmt.Print(left)
-	fmt.Print(" fork here ")
-	fmt.Println(right)
-	arbiter.Unlock()
+	for {
+		select {
+		case message := <-left:
+			if message {
+				if isTaken {
+					left <- false
+				} else {
+					left <- true
+					isTaken = true
+				}
+			} else {
+				isTaken = false
+			}
+		case message := <-right:
+			if message {
+				if isTaken {
+					right <- false
+				} else {
+					right <- true
+					isTaken = true
+				}
+			} else {
+				isTaken = false
+			}
+		default:
+		}
+	}
 }
 
 func phylos(left chan bool, right chan bool) {
-	arbiter.Lock()
-	fmt.Print(left)
-	fmt.Print(" phylo here ")
-	fmt.Println(right)
-	arbiter.Unlock()
-
 	state := "thinking"
 
 	for {

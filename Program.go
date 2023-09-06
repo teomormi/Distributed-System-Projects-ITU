@@ -32,7 +32,7 @@ func main() {
 }
 
 func fork(left chan bool, right chan bool) {
-	isTaken := false
+	//isTaken := false
 	fmt.Println("hey")
 
 	arbiter.Lock()
@@ -54,7 +54,6 @@ func phylos(left chan bool, right chan bool) {
 	for {
 		switch state {
 		case "thinking":
-
 			if <-left && <-right {
 				left <- true
 				right <- true
@@ -62,7 +61,8 @@ func phylos(left chan bool, right chan bool) {
 			}
 			break
 		case "eating":
-
+			left <- false
+			right <- false
 			state = "thinking"
 			break
 		}

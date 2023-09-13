@@ -1,5 +1,11 @@
 package main
 
+import (
+	"fmt"
+	"math/rand"
+	"time"
+)
+
 func main() {
 	var phylo int = 5 // number of phylo to create
 	var prev chan bool
@@ -8,14 +14,14 @@ func main() {
 		next := make(chan bool)
 		if i < (phylo - 1) { // not the last
 			if i == 0 { // the first
-				go phylos(first, next)
+				go phylos(i, first, next)
 			} else {
-				go phylos(prev, next)
+				go phylos(i, prev, next)
 			}
 			prev = make(chan bool)
 			go fork(next, prev)
 		} else {
-			go phylos(prev, next)
+			go phylos(i, prev, next)
 			go fork(next, first)
 		}
 	}
@@ -56,16 +62,24 @@ func fork(left chan bool, right chan bool) {
 	}
 }
 
-func phylos(left chan bool, right chan bool) {
+func phylos(id int, left chan bool, right chan bool) {
 	state := "thinking"
+	counter := 0
 
 	for {
 		switch state {
 		case "thinking":
+			right <- true
+			left <- true
 			if <-left && <-right {
-				left <- true
-				right <- true
 				state = "eating"
+				counter++
+				if counter <= 3 {
+					fmt.Printf("%d eating: %d", id, counter)
+				}
+			} else {
+				left <- false
+				right <- false
 			}
 			break
 		case "eating":
@@ -74,5 +88,7 @@ func phylos(left chan bool, right chan bool) {
 			state = "thinking"
 			break
 		}
+		n := rand.Intn(1000)
+		time.Sleep(time.Duration(n) * time.Millisecond)
 	}
 }

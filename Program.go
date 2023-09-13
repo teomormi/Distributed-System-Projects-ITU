@@ -1,3 +1,12 @@
+/*
+Authors:
+ - Lucas Roy Guldbrandsen
+ - Rafael Steffen Nguyen Jensen
+ - Matteo Mormile
+
+
+*/
+
 package main
 
 import (
@@ -7,9 +16,9 @@ import (
 )
 
 func main() {
-	main := make(chan bool)
-	counter := 0
-	var phylo int = 5 // number of phylo to create
+	main := make(chan bool) //channel for the phylos to communicate with main if they have eaten at least 3 times
+	counter := 0            // counter for how many phylos that have eaten at least 3 times
+	var phylo int = 5       // number of phylo to create
 	var prev chan bool
 	first := make(chan bool)
 	for i := 0; i < phylo; i++ {
@@ -99,7 +108,6 @@ func phylos(id int, left chan bool, right chan bool, main chan bool) {
 			fmt.Printf("%d I'm thinking\n", id)
 			if counter == 3 {
 				main <- true
-				return
 			}
 			break
 		}

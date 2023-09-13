@@ -69,23 +69,23 @@ func phylos(id int, left chan bool, right chan bool) {
 	for {
 		switch state {
 		case "thinking":
-			right <- true
 			left <- true
-			if <-left && <-right {
-				state = "eating"
-				counter++
-				if counter <= 3 {
-					fmt.Printf("%d eating: %d", id, counter)
+			if <-left {
+				right <- true
+				if <-right {
+					state = "eating"
+					counter++
+					fmt.Printf("%d I'm eating for the %d time \n", id, counter)
+				} else {
+					left <- false
 				}
-			} else {
-				left <- false
-				right <- false
 			}
 			break
 		case "eating":
 			left <- false
 			right <- false
 			state = "thinking"
+			fmt.Printf("%d I'm thinking\n", id)
 			break
 		}
 		n := rand.Intn(1000)

@@ -7,6 +7,8 @@ import (
 )
 
 func main() {
+	main := make(chan bool)
+	counter := 0
 	var phylo int = 5 // number of phylo to create
 	var prev chan bool
 	first := make(chan bool)
@@ -14,19 +16,28 @@ func main() {
 		next := make(chan bool)
 		if i < (phylo - 1) { // not the last
 			if i == 0 { // the first
-				go phylos(i, first, next)
+				go phylos(i, first, next, main)
 			} else {
-				go phylos(i, prev, next)
+				go phylos(i, prev, next, main)
 			}
 			prev = make(chan bool)
 			go fork(next, prev)
 		} else {
-			go phylos(i, prev, next)
+			go phylos(i, prev, next, main)
 			go fork(next, first)
 		}
 	}
 	for {
-		// just to wait for the print
+		select {
+		case <-main:
+			counter++
+			break
+		default:
+			break
+		}
+		if counter == phylo {
+			break
+		}
 	}
 }
 
@@ -62,7 +73,7 @@ func fork(left chan bool, right chan bool) {
 	}
 }
 
-func phylos(id int, left chan bool, right chan bool) {
+func phylos(id int, left chan bool, right chan bool, main chan bool) {
 	state := "thinking"
 	counter := 0
 
@@ -86,6 +97,10 @@ func phylos(id int, left chan bool, right chan bool) {
 			right <- false
 			state = "thinking"
 			fmt.Printf("%d I'm thinking\n", id)
+			if counter == 3 {
+				main <- true
+				return
+			}
 			break
 		}
 		n := rand.Intn(1000)

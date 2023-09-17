@@ -4,7 +4,10 @@ Authors:
  - Rafael Steffen Nguyen Jensen
  - Matteo Mormile
 
-
+Our code that prevents a dealock works like so:
+If a phylo is in the thinking state it will first make a request to get the left fork
+If the the left fork is available it wil then make a request to the right fork
+If the right fork is not available then it will return the left fork ensuring that a case where every phylo only has one fork will not occur
 */
 
 package main

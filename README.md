@@ -1,4 +1,11 @@
-# Distributed System Project1
+# Distributed System Project
+
+# Authors
+- Lucas Roy Guldbrandsen
+- Rafael Steffen Nguyen Jensen
+- Matteo Mormile
+
+## First mandatory Hand-in
 The goal of this project is to implement the dining philosophers problem in Go, with the following requirements:
 
 - Each fork must have its own thread (goroutine)
@@ -13,7 +20,4 @@ The goal of this project is to implement the dining philosophers problem in Go, 
 
 - Philosophers must display (print on screen) any state change (eating or thinking) during their execution.
 
-# Authors
-- Lucas Roy Guldbrandsen
-- Rafael Steffen Nguyen Jensen
-- Matteo Mormile
+## Second mandatory Hand-in

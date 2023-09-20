@@ -47,12 +47,53 @@ func main() {
 }
 
 func server(channel chan Message) {
-	//var msg Message
-	//msg.Seq = 1
-	//msg.Payload = "Hello"
-	//msg.Type = 1
 	status := Closed
-	//channel <- msg
+	var seq, ack int
+	for {
+		switch status {
+		case Closed:
+			{
+				msg := <-channel
+				if msg.Type == Syn {
+					// reply with synack
+					ack = msg.Seq + 1
+					seq = rand.Intn(100)
+					synack := Message{
+						Type:    SynAck,
+						Seq:     seq,
+						Ack:     ack,
+						Payload: "test",
+					}
+					channel <- synack
+					status = Listen
+					fmt.Println("Server status: Listen")
+				}
+				break
+			}
+		case Listen:
+			{
+				select {
+				case msg := <-channel:
+					if msg.Type == Ack && msg.Ack == seq+1 && msg.Seq == ack { // estabilished connection
+						status = Established
+						fmt.Println("Server status: Established")
+					}
+					break
+				case <-time.After(2 * time.Second):
+					status = Closed
+					break
+				}
+				// wait for the ack or go back to closed status (waiting for syn)
+				break
+			}
+		case Established:
+			{
+				// waiting for incoming data packets
+			}
+		default:
+			break
+		}
+	}
 }
 
 func client(channel chan Message) {

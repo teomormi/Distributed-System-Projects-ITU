@@ -47,30 +47,51 @@ func main() {
 }
 
 func server(channel chan Message) {
-	var seq int
-	var ack int
-	//var msg Message
-	//msg.Seq = 1
-	//msg.Payload = "Hello"
-	//msg.Type = 1
 	status := Closed
-	//channel <- msg
-
+	var seq, ack int
 	for {
 		switch status {
-		case Listen:
-			select {
-			case msg := <- channel:
-				ack = msg.Seq + 1
-				seq = rand.Intn(100)
-				newMsg := Message{
-					Type: SynAck,
-					Seq: seq,
-					Ack: ack,
+		case Closed:
+			{
+				msg := <-channel
+				if msg.Type == Syn {
+					// reply with synack
+					ack = msg.Seq + 1
+					seq = rand.Intn(100)
+					synack := Message{
+						Type:    SynAck,
+						Seq:     seq,
+						Ack:     ack,
+						Payload: "test",
+					}
+					channel <- synack
+					status = Listen
+					fmt.Println("Server status: Listen")
 				}
-				channel <- newMsg
+				break
 			}
-			
+		case Listen:
+			{
+				select {
+				case msg := <-channel:
+					if msg.Type == Ack && msg.Ack == seq+1 && msg.Seq == ack { // estabilished connection
+						status = Established
+						fmt.Println("Server status: Established")
+					}
+					break
+				case <-time.After(2 * time.Second):
+					status = Closed
+					break
+				}
+				// wait for the ack or go back to closed status (waiting for syn)
+				break
+			}
+		case Established:
+			{
+				// waiting for incoming data packets
+			}
+		default:
+			break
 		}
 	}
 }
@@ -79,6 +100,7 @@ func client(channel chan Message) {
 	status := Closed
 	var seq int
 	var ack int
+	fmt.Println("Client Status: Closed")
 
 	for {
 		switch status {
@@ -90,33 +112,35 @@ func client(channel chan Message) {
 			}
 			channel <- msg
 			status = Await
+			fmt.Println("Client Status: Await")
 			break
 		case Await:
 			select {
 			case msg := <-channel:
 				if msg.Type == SynAck && msg.Ack == seq+1 {
 					seq++
-					ack = msg.Ack
-					msg := Message{}
+					ack = msg.Seq + 1
+					msg := Message{
+						Type: Ack,
+						Ack:  ack,
+						Seq:  seq,
+					}
+					channel <- msg
+					status = Established
+					fmt.Println("Client Status: Established")
+				} else {
+					status = Closed
+					fmt.Println("Client Status: Closed")
 				}
 				break
 			case <-time.After(2 * time.Second):
 				status = Closed
+				fmt.Println("Client Status: Closed")
 				break
 			}
+			break
+		case Established:
+
 		}
 	}
-
-	// send syn with random sequence
-
-	// send syn
-
-	for {
-		select {
-		case message := <-channel:
-			fmt.Printf("Type %d Seq %d Payload %s", message.Type, message.Seq, message.Payload)
-		default:
-		}
-	}
-
 }

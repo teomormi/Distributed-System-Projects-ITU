@@ -11,6 +11,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"time"
 )
 
 const (
@@ -24,11 +25,13 @@ const (
 	Closed      int = 0
 	Listen          = 1
 	Established     = 2
+	Await           = 3
 )
 
 type Message struct {
-	Type    int    // syn , synack , data, ack
-	Seq     int    //
+	Type    int // syn , synack , data, ack
+	Seq     int //
+	Ack     int
 	Payload string // message content
 }
 
@@ -54,12 +57,40 @@ func server(channel chan Message) {
 
 func client(channel chan Message) {
 	status := Closed
+	var seq int
+	var ack int
+
+	for {
+		switch status {
+		case Closed:
+			seq = rand.Intn(100)
+			msg := Message{
+				Type: Syn,
+				Seq:  seq,
+			}
+			channel <- msg
+			status = Await
+			break
+		case Await:
+			select {
+			case msg := <-channel:
+				if msg.Type == SynAck && msg.Ack == seq+1 {
+					seq++
+					ack = msg.Ack
+					msg := Message{}
+				}
+				break
+			case <-time.After(2 * time.Second):
+				status = Closed
+				break
+			}
+		}
+	}
+
 	// send syn with random sequence
-	var msg Message
-	msg.Type = Syn
-	msg.Seq = rand.Intn(100)
+
 	// send syn
-	channel <- msg
+
 	for {
 		select {
 		case message := <-channel:

@@ -47,12 +47,32 @@ func main() {
 }
 
 func server(channel chan Message) {
+	var seq int
+	var ack int
 	//var msg Message
 	//msg.Seq = 1
 	//msg.Payload = "Hello"
 	//msg.Type = 1
 	status := Closed
 	//channel <- msg
+
+	for {
+		switch status {
+		case Listen:
+			select {
+			case msg := <- channel:
+				ack = msg.Seq + 1
+				seq = rand.Intn(100)
+				newMsg := Message{
+					Type: SynAck,
+					Seq: seq,
+					Ack: ack,
+				}
+				channel <- newMsg
+			}
+			
+		}
+	}
 }
 
 func client(channel chan Message) {

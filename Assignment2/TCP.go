@@ -100,6 +100,7 @@ func client(channel chan Message) {
 	status := Closed
 	var seq int
 	var ack int
+	fmt.Println("Client Status: Closed")
 
 	for {
 		switch status {
@@ -111,7 +112,7 @@ func client(channel chan Message) {
 			}
 			channel <- msg
 			status = Await
-			fmt.Println("Client: Status changed to Await")
+			fmt.Println("Client Status: Await")
 			break
 		case Await:
 			select {
@@ -126,23 +127,20 @@ func client(channel chan Message) {
 					}
 					channel <- msg
 					status = Established
-					fmt.Println("Client: Status changed to Established")
+					fmt.Println("Client Status: Established")
 				} else {
 					status = Closed
-					fmt.Println("Client: Status changed to Closed")
+					fmt.Println("Client Status: Closed")
 				}
 				break
 			case <-time.After(2 * time.Second):
 				status = Closed
-				fmt.Println("Client: Status changed to Closed")
+				fmt.Println("Client Status: Closed")
 				break
 			}
 			break
 		case Established:
-			fmt.Println("Client: Connections established")
-			for {
 
-			}
 		}
 	}
 }

@@ -70,33 +70,38 @@ func client(channel chan Message) {
 			}
 			channel <- msg
 			status = Await
+			fmt.Println("Client: Status changed to Await")
 			break
 		case Await:
 			select {
 			case msg := <-channel:
 				if msg.Type == SynAck && msg.Ack == seq+1 {
 					seq++
-					ack = msg.Ack
-					msg := Message{}
+					ack = msg.Seq + 1
+					msg := Message{
+						Type: Ack,
+						Ack:  ack,
+						Seq:  seq,
+					}
+					channel <- msg
+					status = Established
+					fmt.Println("Client: Status changed to Established")
+				} else {
+					status = Closed
+					fmt.Println("Client: Status changed to Closed")
 				}
 				break
 			case <-time.After(2 * time.Second):
 				status = Closed
+				fmt.Println("Client: Status changed to Closed")
 				break
+			}
+			break
+		case Established:
+			fmt.Println("Client: Connections established")
+			for {
+
 			}
 		}
 	}
-
-	// send syn with random sequence
-
-	// send syn
-
-	for {
-		select {
-		case message := <-channel:
-			fmt.Printf("Type %d Seq %d Payload %s", message.Type, message.Seq, message.Payload)
-		default:
-		}
-	}
-
 }

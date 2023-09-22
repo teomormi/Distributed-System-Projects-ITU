@@ -18,7 +18,9 @@ const (
 	Syn    int = 0
 	SynAck     = 1
 	Ack        = 2
-	Data       = 3
+	Fin        = 3
+	FinAck     = 4
+	Data       = 5
 )
 
 const (
@@ -26,10 +28,12 @@ const (
 	Listen          = 1
 	Established     = 2
 	Await           = 3
+	CloseWait       = 4
+	LastAck         = 5
 )
 
 type Message struct {
-	Type    int // syn , synack , data, ack
+	Type    int // syn , synack , data, ack, fin, finack
 	Seq     int //
 	Ack     int
 	Payload string // message content
@@ -89,10 +93,46 @@ func server(channel chan Message) {
 		case Established:
 			{
 				// waiting for incoming data packets
+				//after data recieved
+				msg := <-channel
+				if msg.Type == Fin {
+					ack = msg.Seq + 1
+					finack := Message{
+						Type: FinAck,
+						Ack:  ack,
+					}
+					channel <- finack
+					status = CloseWait
+				}
+				break
+			}
+		case CloseWait:
+			{
+				seq = rand.Intn(100)
+				fin := Message{
+					Type: Fin,
+					Seq:  seq,
+				}
+				channel <- fin
+				status = LastAck
+				break
+			}
+		case LastAck:
+			{
+				msg := <-channel
+				if msg.Type == FinAck {
+					if msg.Ack == seq+1 {
+						status = Closed
+					}
+				}
 			}
 		default:
-			break
+			{
+				break
+			}
+
 		}
+
 	}
 }
 

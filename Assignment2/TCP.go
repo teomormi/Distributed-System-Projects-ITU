@@ -46,6 +46,8 @@ var list []string
 func main() {
 
 	network := make(chan Message, 2) // need to be buffered or some reply will be lost
+	fmt.Println("After the establish of the connection it is possibile to send message from server to client\n" +
+		"by only type on the cmd line the payload of the message and press enter, type exit to quit")
 	// 2 go routine simulate server and client
 	go client(network)
 	go server(network)
@@ -99,7 +101,7 @@ func server(channel chan Message) {
 			{
 				// waiting for incoming data packets
 				msg := <-channel
-				if msg.Type == Data && msg.Ack == seq && msg.Seq == ack+1 { // check seq and ack number
+				if msg.Type == Data && msg.Ack == seq && msg.Seq == ack+1 { // check seq and ack number (add check also for already acked packet)
 					fmt.Printf("Server: Message payload: %s", msg.Payload)
 					// test some delay or losses (retransit timeout 5 second - line 221)
 					time.Sleep((time.Duration(rand.Intn(6)) + 2) * time.Second)
@@ -128,7 +130,7 @@ func server(channel chan Message) {
 				}
 				break
 			}
-			// check, probabluy wrong
+			// check it
 		case CloseWait:
 			{
 				seq = rand.Intn(100)

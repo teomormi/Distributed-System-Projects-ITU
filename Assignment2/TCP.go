@@ -45,7 +45,7 @@ var list []string
 
 func main() {
 
-	network := make(chan Message)
+	network := make(chan Message, 2) // need to be buffered or some reply will be lost
 	// 2 go routine simulate server and client
 	go client(network)
 	go server(network)
@@ -62,15 +62,14 @@ func server(channel chan Message) {
 		case Closed:
 			{
 				msg := <-channel
-				if msg.Type == Syn {
+				if msg.Type == Syn { // ok
 					// reply with synack
 					ack = msg.Seq + 1
 					seq = rand.Intn(100)
 					synack := Message{
-						Type:    SynAck,
-						Seq:     seq,
-						Ack:     ack,
-						Payload: "test",
+						Type: SynAck,
+						Seq:  seq,
+						Ack:  ack,
 					}
 					channel <- synack
 					status = Listen
@@ -83,17 +82,16 @@ func server(channel chan Message) {
 				select {
 				// wait for the ack or go back to closed status (waiting for syn)
 				case msg := <-channel:
-					if msg.Type == Ack && msg.Ack == seq+1 && msg.Seq == ack { // estabilished connection
+					if msg.Type == Ack && msg.Ack == seq && msg.Seq == ack+1 { // estabilished connection
 						status = Established
-						// save last seq and ack to check the following messages
-						seq = msg.Seq
-						ack = msg.Ack
+						// increase ack for check the first data packet
+						ack++
 						fmt.Println("Server status: Established")
 					}
 					break
-					/*case <-time.After(2 * time.Second):
+				case <-time.After(5 * time.Second):
 					status = Closed
-					break*/
+					break
 				}
 				break
 			}
@@ -101,14 +99,14 @@ func server(channel chan Message) {
 			{
 				// waiting for incoming data packets
 				msg := <-channel
-				if msg.Type == Data && msg.Ack == ack && msg.Seq == seq+1 { // check seq and ack number
-					fmt.Printf("Message payload: %s\n", msg.Payload)
+				if msg.Type == Data && msg.Ack == seq && msg.Seq == ack+1 { // check seq and ack number
+					fmt.Printf("Server: Message payload: %s", msg.Payload)
 					// test some delay or losses (retransit timeout 5 second - line 221)
-					time.Sleep(time.Duration(rand.Intn(4)) * time.Millisecond)
+					time.Sleep((time.Duration(rand.Intn(6)) + 2) * time.Second)
 					// reply with ack
-					seq = msg.Ack
 					ack = msg.Seq + 1
-					fmt.Printf("Server: Send ack to client Seq=%d Ack=%d\n", seq, ack)
+					seq = msg.Ack
+					fmt.Printf("Server: Reply with ack to client (Seq=%d Ack=%d)\n", seq, ack)
 					reply := Message{
 						Type: Ack,
 						Ack:  ack,
@@ -117,18 +115,20 @@ func server(channel chan Message) {
 					// save last seq and ack to check the following messages
 					channel <- reply
 				}
-
 				if msg.Type == Fin {
 					ack = msg.Seq + 1
+					seq = msg.Ack
 					finack := Message{
 						Type: FinAck,
 						Ack:  ack,
+						Seq:  seq,
 					}
 					channel <- finack
 					status = CloseWait
 				}
 				break
 			}
+			// check, probabluy wrong
 		case CloseWait:
 			{
 				seq = rand.Intn(100)
@@ -161,8 +161,7 @@ func server(channel chan Message) {
 
 func client(channel chan Message) {
 	status := Closed
-	var seq int
-	var ack int
+	var seq, ack int
 	last := Message{
 		Type: -1,
 	}
@@ -184,8 +183,8 @@ func client(channel chan Message) {
 			select {
 			case msg := <-channel:
 				if msg.Type == SynAck && msg.Ack == seq+1 {
-					seq++
-					ack = msg.Seq + 1
+					ack = msg.Seq
+					seq = msg.Ack + 1
 					msg := Message{
 						Type: Ack,
 						Ack:  ack,
@@ -194,6 +193,9 @@ func client(channel chan Message) {
 					channel <- msg
 					status = Established
 					fmt.Println("Client Status: Established")
+					time.Sleep(2 * time.Second) // rilegge il suo messaggio
+					// first data package
+					seq++
 					// go routine for input
 					go input()
 				} else {
@@ -211,11 +213,10 @@ func client(channel chan Message) {
 			select {
 			case msg := <-channel:
 				if msg.Type == Ack && msg.Ack == seq+1 && msg.Seq == ack {
-					fmt.Println("Client: Received Ack")
+					ack = msg.Seq
+					seq = msg.Ack + 1
 					if len(list) != 0 {
-						ack = msg.Seq
-						seq = msg.Ack + 1
-						fmt.Printf("Client: Send message to server Seq=%d Ack=%d\n", seq, ack)
+						fmt.Printf("Client: Send next message to server (Seq=%d Ack=%d)\n", seq, ack)
 						next := Message{
 							Type:    Data,
 							Ack:     ack,
@@ -229,11 +230,11 @@ func client(channel chan Message) {
 						last.Type = -1
 					}
 				}
+				break
 			case <-time.After(5 * time.Second): // resend or send the first packet
 				if last.Type == -1 { // no retransmittion
 					if len(list) > 0 { // at least one packet in the list
-						seq++
-						fmt.Printf("Client: Send message to server Seq=%d Ack=%d\n", seq, ack)
+						fmt.Printf("Client: Send message to server (Seq=%d Ack=%d)\n", seq, ack)
 						next := Message{
 							Type:    Data,
 							Ack:     ack,
@@ -243,10 +244,12 @@ func client(channel chan Message) {
 						list = list[1:] // remove first element from the list
 						last = next
 						channel <- next
+					} else {
+						fmt.Println("Nothing to send")
 					}
 				} else {
 					// resend the packet
-					fmt.Println("Client: REsend message to server")
+					fmt.Printf("Client: REsend message to server (Seq=%d Ack=%d)\n", last.Seq, last.Ack)
 					channel <- last
 				}
 			}

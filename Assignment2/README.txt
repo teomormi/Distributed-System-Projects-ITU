@@ -2,6 +2,13 @@ a)
 The packages in our implementation is the Message struct which is using a datastructure that
 maps keys to values.
 
+- bufio: to read the message payload from the command line
+- fmt: we use it for print some messages on the command line
+- math/rand: to generate the initial values for sequence and ack number
+- os: indicate the standard input to the NewReader function
+- strings: to isolate the string with the "exit" command
+- time: trigger the retransmit of the message after some amount of time
+
 b)
 Our implementation uses threads. 
 It is not realistic to use threads because they can not properly simulate the problems 
@@ -10,7 +17,7 @@ that can occur when communicating across a network like package loss or package 
 c)
 Each message has two values ack and seq. 
 With these two values it is possible to figure out which message was sent before another.
-Then the messages can be reordered based on the values. 
+We drop a message in case of missing a previous one and we re-ack the already acked messages. 
 
 d)
 After sending a message the client waits for a certain amount of time.

@@ -1,9 +1,11 @@
 a)
+The packages in our implementation is the Message struct which is using a datastructure that
+maps keys to values.
 
 b)
 Our implementation uses threads. 
 It is not realistic to use threads because they can not properly simulate the problems 
-that can occur when communicating across a network. 
+that can occur when communicating across a network like package loss or package reordering.
 
 c)
 Each message has two values ack and seq. 

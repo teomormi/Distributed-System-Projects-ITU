@@ -34,7 +34,8 @@ e) Why is the 3-way handshake important?
 
 ## Third mandatory Hand-in
 You have to implement Chitty-Chat a distributed system, that is providing a chatting service, and keeps track of logical time using Lamport Timestamps.
-We call clients of the Chitty-Chat service Participants. 
+We call clients of the Chitty-Chat service Participants. \
+Original repository here: https://github.com/rafj58/ChittyChat
 
 ### System Requirements
     R1: Chitty-Chat is a distributed service, that enables its clients to chat. The service is using gRPC for communication. You have to design the API, including gRPC methods and data types. 
@@ -58,8 +59,8 @@ We call clients of the Chitty-Chat service Participants.
 
 ## Fourth mandatory Hand-in
 You have to implement distributed mutual exclusion between nodes in your distributed system. 
-Your system has to consist of a set of peer nodes, and you are not allowed to base your implementation on a central server solution.
-You can decide to base your implementation on one of the algorithms, that were discussed in lecture 7.
+Your system has to consist of a set of peer nodes, and you are not allowed to base your implementation on a central server solution. \
+Original repository here: https://github.com/chrolle69/MutualExclusion
 
 ### System Requirements:
 ```
@@ -81,7 +82,8 @@ R3: Liveliness: Every node that requests access to the Critical Section, will ge
 
 ## Fifth mandatory Hand-in
 You must implement a **distributed auction system** using replication: a distributed component which handles auctions, and provides operations for bidding and querying the state of an auction. The component must faithfully implement the semantics of the system described below, and must at least be resilient to one (1) crash failure.
-The goal of this mandatory activity is that you learn (by doing) how to use replication to design a service that is resilent to crashes. In particular, it is important that you can recognise what the key issues that may arise are and understand how to deal with them.
+The goal of this mandatory activity is that you learn (by doing) how to use replication to design a service that is resilent to crashes. In particular, it is important that you can recognise what the key issues that may arise are and understand how to deal with them. \
+Original repository here: https://github.com/rafj58/Replication
 
 ## Sixth mandatory Hand-in
 This last mandatory activity is about Raft and it requires each group to find an implementation of Raft (in Go) and write a 2-page report about it. 

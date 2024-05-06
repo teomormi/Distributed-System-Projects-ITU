@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+option go_package = "grpc/proto";
+
+package proto;
+
+message ClientReference {
+    string client_address = 1;
+    int32 client_port = 2;
+    string client_name = 3;
+}
+
+message Message {
+    string text = 1;
+    int32 type = 2;
+    int32 time = 3;
+    // time will be represented by Lamport clocks incremented when a message is received or sended
+    ClientReference client_reference = 4;
+}
+
+service ChittyChatService {
+    rpc SendMessage (stream Message) returns (stream Message);
+}
